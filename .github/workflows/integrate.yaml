@@ -1,31 +1,34 @@
 name: Test Charmhub Upload
 
 on:
-- push
-- pull_request
+  push:
+    branches:
+      - "track/*"
+      - "master"
+  pull_request:
+    branches:
+      - "track/*"
+      - "master"
 
 jobs:
-  ensure-compiled:
-    runs-on: ubuntu-latest
-    name: Ensure ncc compilation
-    steps:
-      - uses: actions/checkout@v2
-      - run: npm install
-      - run: ./hooks/pre-commit
-
   test-charmhub-upload:
     runs-on: ubuntu-latest
     name: Test charmhub upload
     steps:
       - uses: actions/checkout@v2
-
-      - uses: ./
+      - name: Select charmhub channel
+        uses: ./channel
+        id: channel
+      - name: Upload charm to charmhub
+        uses: ./upload-charm
         with:
           credentials: "${{ secrets.CHARMCRAFT_AUTH }}"
           charm-path: test-charm/
           upload-image: "true"
-
-      - uses: ./
+          channel: ${{ steps.channel.outputs.name }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ./upload-bundle
         with:
           credentials: "${{ secrets.CHARMCRAFT_AUTH }}"
           bundle-path: test-bundle/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
